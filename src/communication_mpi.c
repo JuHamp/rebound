@@ -48,7 +48,7 @@
 
 MPI_Status stat; 
 
-void communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
+void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
 	MPI_Init(&argc,&argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&(r->mpi_num));
 	MPI_Comm_rank(MPI_COMM_WORLD,&(r->mpi_id));
@@ -129,7 +129,7 @@ void communication_mpi_init(struct reb_simulation* const r, int argc, char** arg
 #endif
 }
 
-int communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i){
+int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i){
 	int root_n_per_node = r->root_n/r->mpi_num;
 	int proc_id = i/root_n_per_node;
 	if (proc_id != r->mpi_id){
@@ -189,7 +189,7 @@ void reb_communication_mpi_distribute_particles(struct reb_simulation* const r){
 	}
 }
 
-void communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r, struct reb_particle pt, int proc_id){
+void reb_communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r, struct reb_particle pt, int proc_id){
 	int send_N = r->particles_send_N[proc_id];
 	while (r->particles_send_Nmax[proc_id] <= send_N){
 		r->particles_send_Nmax[proc_id] += 128;
@@ -203,7 +203,7 @@ void communication_mpi_add_particle_to_send_queue(struct reb_simulation* const r
 /** 
  * This is the data structure for an axis aligned bounding box.
  */
-struct aabb{
+struct reb_aabb{
 	double xmin;
 	double xmax;
 	double ymin;
@@ -212,11 +212,11 @@ struct aabb{
 	double zmax;
 };
 
-struct aabb communication_boundingbox_for_root(struct reb_simulation* const r, int index){
+struct reb_aabb communication_boundingbox_for_root(struct reb_simulation* const r, int index){
 	int i = index%r->root_nx;
 	int j = ((index-i)/r->root_nx)%r->root_ny;
 	int k = ((index-i)/r->root_nx-j)/r->root_ny;
-	struct aabb boundingbox;
+	struct reb_aabb boundingbox;
 	boundingbox.xmin = -r->boxsize.x/2.+r->root_size*(double)i;
 	boundingbox.ymin = -r->boxsize.y/2.+r->root_size*(double)j;
 	boundingbox.zmin = -r->boxsize.z/2.+r->root_size*(double)k;
@@ -226,13 +226,13 @@ struct aabb communication_boundingbox_for_root(struct reb_simulation* const r, i
 	return boundingbox;
 }
 
-struct aabb reb_communication_boundingbox_for_proc(struct reb_simulation* const r, int proc_id){
+struct reb_aabb reb_communication_boundingbox_for_proc(struct reb_simulation* const r, int proc_id){
 	int root_n_per_node = r->root_n/r->mpi_num;
 	int root_start = proc_id*root_n_per_node;
 	int root_stop  = (proc_id+1)*root_n_per_node;
-	struct aabb boundingbox = communication_boundingbox_for_root(r, root_start);
+	struct reb_aabb boundingbox = communication_boundingbox_for_root(r, root_start);
 	for (int i=root_start+1;i<root_stop;i++){
-		struct aabb boundingbox2 = communication_boundingbox_for_root(r,i);
+		struct reb_aabb boundingbox2 = communication_boundingbox_for_root(r,i);
 		if (boundingbox.xmin > boundingbox2.xmin) boundingbox.xmin = boundingbox2.xmin;
 		if (boundingbox.ymin > boundingbox2.ymin) boundingbox.ymin = boundingbox2.ymin;
 		if (boundingbox.zmin > boundingbox2.zmin) boundingbox.zmin = boundingbox2.zmin;
@@ -243,7 +243,7 @@ struct aabb reb_communication_boundingbox_for_proc(struct reb_simulation* const 
 	return boundingbox;
 }
 
-double communication_distance2_of_aabb_to_cell(struct aabb bb, struct reb_treecell* node){
+double reb_communication_distance2_of_aabb_to_cell(struct reb_aabb bb, struct reb_treecell* node){
 	double distancex = fabs(node->x - (bb.xmin+bb.xmax)/2.)  -  (node->w + bb.xmax-bb.xmin)/2.;
 	double distancey = fabs(node->y - (bb.ymin+bb.ymax)/2.)  -  (node->w + bb.ymax-bb.ymin)/2.;
 	double distancez = fabs(node->z - (bb.zmin+bb.zmax)/2.)  -  (node->w + bb.zmax-bb.zmin)/2.;
@@ -263,7 +263,7 @@ double reb_communication_distance2_of_proc_to_node(struct reb_simulation* const 
 	for (int gby=-nghostycol; gby<=nghostycol; gby++){
 	for (int gbz=-nghostzcol; gbz<=nghostzcol; gbz++){
 		struct reb_ghostbox gb = reb_boundary_get_ghostbox(r, gbx,gby,gbz);
-		struct aabb boundingbox = reb_communication_boundingbox_for_proc(r, proc_id);
+		struct reb_aabb boundingbox = reb_communication_boundingbox_for_proc(r, proc_id);
 		boundingbox.xmin+=gb.shiftx;
 		boundingbox.xmax+=gb.shiftx;
 		boundingbox.ymin+=gb.shifty;
@@ -271,7 +271,7 @@ double reb_communication_distance2_of_proc_to_node(struct reb_simulation* const 
 		boundingbox.zmin+=gb.shiftz;
 		boundingbox.zmax+=gb.shiftz;
 		// calculate distance
-		double distance2new = communication_distance2_of_aabb_to_cell(boundingbox,node);
+		double distance2new = reb_communication_distance2_of_aabb_to_cell(boundingbox,node);
 		if (distance2 > distance2new) distance2 = distance2new;
 	}
 	}
@@ -311,7 +311,7 @@ void reb_communication_mpi_prepare_essential_cell_for_collisions_for_proc(struct
 		}
 	}
 }
-void communication_mpi_prepare_essential_tree_for_collisions(struct reb_simulation* const r, struct reb_treecell* root){
+void reb_communication_mpi_prepare_essential_tree_for_collisions(struct reb_simulation* const r, struct reb_treecell* root){
 	if (root==NULL) return;
 	// Find out which cells are needed by every other node
 	for (int i=0; i<r->mpi_num; i++){
@@ -344,7 +344,7 @@ void reb_communication_mpi_prepare_essential_cell_for_gravity_for_proc(struct re
 	}
 }
 
-void communication_mpi_prepare_essential_tree_for_gravity(struct reb_simulation* const r,struct reb_treecell* root){
+void reb_communication_mpi_prepare_essential_tree_for_gravity(struct reb_simulation* const r,struct reb_treecell* root){
 	if (root==NULL) return;
 	// Find out which cells are needed by every other node
 	for (int i=0; i<r->mpi_num; i++){

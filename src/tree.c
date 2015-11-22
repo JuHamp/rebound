@@ -268,7 +268,7 @@ static void reb_tree_update_gravity_data_in_cell(const struct reb_simulation* co
 void reb_tree_update_gravity_data(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
 #ifdef MPI
-		if (communication_mpi_rootbox_is_local(i)==1){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
 			if (r->tree_root[i]!=NULL){
 				reb_tree_update_gravity_data_in_cell(r, r->tree_root[i]);
@@ -286,7 +286,7 @@ void reb_tree_update(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
 
 #ifdef MPI
-		if (communication_mpi_rootbox_is_local(i)==1){
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
 #endif // MPI
 			r->tree_root[i] = reb_tree_update_cell(r, r->tree_root[i]);
 #ifdef MPI
@@ -371,8 +371,8 @@ void reb_tree_add_essential_node(struct reb_simulation* const r, struct reb_tree
 }
 void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
-		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_gravity(r->tree_root[i]);
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
+			reb_communication_mpi_prepare_essential_tree_for_gravity(r, r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and
@@ -383,8 +383,8 @@ void reb_tree_prepare_essential_tree_for_gravity(struct reb_simulation* const r)
 }
 void reb_tree_prepare_essential_tree_for_collisions(struct reb_simulation* const r){
 	for(int i=0;i<r->root_n;i++){
-		if (communication_mpi_rootbox_is_local(i)==1){
-			communication_mpi_prepare_essential_tree_for_collisions(r->tree_root[i]);
+		if (reb_communication_mpi_rootbox_is_local(r, i)==1){
+			reb_communication_mpi_prepare_essential_tree_for_collisions(r, r->tree_root[i]);
 		}else{
 			// Delete essential tree reference. 
 			// Tree itself is saved in tree_essential_recv[][] and

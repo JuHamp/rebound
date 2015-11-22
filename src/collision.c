@@ -39,6 +39,7 @@
 #include "rebound.h"
 #include "boundary.h"
 #include "tree.h"
+#include "communication_mpi.h"
 
 static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const r, int* collisions_N, struct reb_ghostbox gb, struct reb_ghostbox gbunmod, int ri, double p1_r,  double* nearest_r2, struct reb_collision* collision_nearest, struct reb_treecell* c);
 static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, struct reb_collision c);
@@ -214,7 +215,7 @@ static void reb_tree_get_nearest_neighbour_in_cell(struct reb_simulation* const 
 		int condition 	= 1;
 #ifdef MPI
 		int isloc	= 1 ;
-		isloc = communication_mpi_rootbox_is_local(r, ri);
+		isloc = reb_communication_mpi_rootbox_is_local(r, ri);
 		if (isloc==1){
 #endif // MPI
 			/**
@@ -301,7 +302,7 @@ static void reb_collision_resolve_hardsphere(struct reb_simulation* const r, str
 	struct reb_particle p1 = particles[c.p1];
 	struct reb_particle p2;
 #ifdef MPI
-	int isloc = communication_mpi_rootbox_is_local(r, c.ri);
+	int isloc = reb_communication_mpi_rootbox_is_local(r, c.ri);
 	if (isloc==1){
 #endif // MPI
 		p2 = particles[c.p2];

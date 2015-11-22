@@ -30,6 +30,7 @@
 #include "rebound.h"
 #include "tree.h"
 #include "boundary.h"
+#include "particle.h"
 #ifndef COLLISIONS_NONE
 #include "collision.h"
 #endif // COLLISIONS_NONE
@@ -86,7 +87,7 @@ void reb_add(struct reb_simulation* const r, struct reb_particle pt){
 	int proc_id = rootbox/root_n_per_node;
 	if (proc_id != r->mpi_id && r->N >= r->N_active){
 		// Add particle to array and send them to proc_id later. 
-		communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
+		reb_communication_mpi_add_particle_to_send_queue(r,pt,proc_id);
 		return;
 	}
 #endif // MPI
