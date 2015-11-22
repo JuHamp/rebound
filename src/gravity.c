@@ -246,7 +246,7 @@ void reb_calculate_acceleration(struct reb_simulation* r){
 	// Distribute active particles from root to all other nodes.
 	// This assures that round-off errors do not accumulate and 
 	// the copies of active particles do not diverge. 
-	MPI_Bcast(particles, N_active, mpi_particle, 0, MPI_COMM_WORLD); 
+	MPI_Bcast(particles, N_active, r->mpi_particle, 0, MPI_COMM_WORLD); 
 #endif
 
 }

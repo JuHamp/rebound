@@ -43,40 +43,14 @@
 #include "particle.h"
 #include "rebound.h"
 #include "tree.h"
-#include "boundaries.h"
-#include "collisions.h"
 #include "communication_mpi.h"
 
-#include "mpi.h"
-MPI_Datatype mpi_particle;
-#ifdef TREE
-MPI_Datatype mpi_cell;
-#endif
 MPI_Status stat; 
-int mpi_num;
-int mpi_id;
 
-struct reb_particle** 	particles_send;
-int* 			particles_send_N;
-int* 			particles_send_Nmax;
-struct reb_particle** 	particles_recv;
-int* 			particles_recv_N;
-int* 			particles_recv_Nmax;
-
-#ifdef TREE
-struct reb_treecell** 	tree_essential_send;
-int* 		tree_essential_send_N;
-int* 		tree_essential_send_Nmax;
-struct reb_treecell** 	tree_essential_recv;
-int* 		tree_essential_recv_N;
-int* 		tree_essential_recv_Nmax;
-#endif
-
-
-void communication_mpi_init(int argc, char** argv){
+void communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
 	MPI_Init(&argc,&argv);
-	MPI_Comm_size(MPI_COMM_WORLD,&mpi_num);
-	MPI_Comm_rank(MPI_COMM_WORLD,&mpi_id);
+	MPI_Comm_size(MPI_COMM_WORLD,&(r->mpi_num));
+	MPI_Comm_rank(MPI_COMM_WORLD,&(r->mpi_id));
 	
 	
 	// Setup MPI description of the particle structure 
