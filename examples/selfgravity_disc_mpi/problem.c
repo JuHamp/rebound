@@ -28,7 +28,7 @@ int main(int argc, char* argv[]){
 	r->softening 	= 0.02;		// Gravitational softening length
 	r->dt 		= 3e-2;		// Timestep
 	const double boxsize = 10.2;
-	reb_configure_box(r,boxsize,1,1,1);
+	reb_configure_box(r,boxsize,2,2,2);
 
 	// Setup particles
 	double disc_mass = 2e-1;	// Total disc mass

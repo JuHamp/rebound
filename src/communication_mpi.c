@@ -60,19 +60,15 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	MPI_Aint indices[4];
 	MPI_Datatype oldtypes[4];
 	blen[bnum] 	= 10;
-#ifndef COLLISIONS_NONE
 	blen[bnum] 	+= 2; 
-#endif //COLLISIONS_NONE
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
-#ifdef TREE
 	struct reb_particle p;
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= (char*)&p.c - (char*)&p; 
 	oldtypes[bnum] 	= MPI_CHAR;
 	bnum++;
-#endif // TREE
 	blen[bnum] 	= 1; 
 	indices[bnum] 	= sizeof(struct reb_particle); 
 	oldtypes[bnum] 	= MPI_UB;
@@ -80,17 +76,14 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_particle) );
 	MPI_Type_commit(&(r->mpi_particle)); 
 
-#ifdef TREE
 	// Setup MPI description of the cell structure 
 	struct reb_treecell c;
 	bnum = 0;
 	blen[bnum] 	= 4; 
-#ifdef GRAVITY_TREE
 	blen[bnum] 	+= 4;
 #ifdef QUADRUPOLE
 	blen[bnum] 	+= 6;
 #endif // QUADRUPOLE
-#endif //GRAVITY_TREE
 	indices[bnum] 	= 0; 
 	oldtypes[bnum] 	= MPI_DOUBLE;
 	bnum++;
@@ -106,9 +99,8 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	indices[bnum] 	= sizeof(struct reb_treecell); 
 	oldtypes[bnum] 	= MPI_UB;
 	bnum++;
-	MPI_Type_struct(bnum, blen, indices, oldtypes, &mpi_cell );
-	MPI_Type_commit(&mpi_cell); 
-#endif // TREE 
+	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_cell) );
+	MPI_Type_commit(&(r->mpi_cell)); 
 	
 	// Prepare send/recv buffers for particles
 	r->particles_send   	= calloc(r->mpi_num,sizeof(struct reb_particle*));
@@ -118,15 +110,13 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	r->particles_recv_N 	= calloc(r->mpi_num,sizeof(int));
 	r->particles_recv_Nmax 	= calloc(r->mpi_num,sizeof(int));
 
-#ifdef TREE
 	// Prepare send/recv buffers for essential tree
-	tree_essential_send   	= calloc(mpi_num,sizeof(struct reb_treecell*));
-	tree_essential_send_N 	= calloc(mpi_num,sizeof(int));
-	tree_essential_send_Nmax= calloc(mpi_num,sizeof(int));
-	tree_essential_recv   	= calloc(mpi_num,sizeof(struct reb_treecell*));
-	tree_essential_recv_N 	= calloc(mpi_num,sizeof(int));
-	tree_essential_recv_Nmax= calloc(mpi_num,sizeof(int));
-#endif
+	r->tree_essential_send   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
+	r->tree_essential_send_N 	= calloc(r->mpi_num,sizeof(int));
+	r->tree_essential_send_Nmax= calloc(r->mpi_num,sizeof(int));
+	r->tree_essential_recv   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
+	r->tree_essential_recv_N 	= calloc(r->mpi_num,sizeof(int));
+	r->tree_essential_recv_Nmax= calloc(r->mpi_num,sizeof(int));
 }
 
 int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i){

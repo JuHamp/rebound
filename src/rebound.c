@@ -159,6 +159,15 @@ void reb_configure_box(struct reb_simulation* const r, const double root_size, c
 	if (r->root_nx <=0 || r->root_ny <=0 || r->root_nz <= 0){
 		reb_exit("Number of root boxes must be greater or equal to 1 in each direction.");
 	}
+#ifdef MPI
+    reb_communication_mpi_init(r,0,NULL);
+	// Make sure domain can be decomposed into equal number of root boxes per node.
+	if ((r->root_n/r->mpi_num)*r->mpi_num != r->root_n){
+		if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->root_n,r->mpi_num);
+		exit(-1);
+	}
+	printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+#endif // MPI
 }
 
 static void set_dp7_null(struct reb_dp7 * dp){
@@ -309,12 +318,22 @@ void reb_init_simulation(struct reb_simulation* r){
 	r->opening_angle2	= 0.25;
 
 #ifdef MPI
-	// Make sure domain can be decomposed into equal number of root boxes per node.
-	if ((r->root_n/r->mpi_num)*r->mpi_num != r->root_n){
-		if (r->mpi_id==0) fprintf(stderr,"ERROR: Number of root boxes (%d) not a multiple of mpi nodes (%d).\n",r->root_n,r->mpi_num);
-		exit(-1);
-	}
-	printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+    r->mpi_id = 0;                            
+    r->mpi_num = 0;                           
+    r->particles_send = NULL;  
+    r->particles_send_N = 0;	              
+    r->particles_send_Nmax = 0;	              
+    r->particles_recv = NULL;	  
+    r->particles_recv_N = 0;                  
+    r->particles_recv_Nmax = 0;               
+    
+    r->tree_essential_send = NULL;
+    r->tree_essential_send_N = 0;             
+    r->tree_essential_send_Nmax = 0;          
+    r->tree_essential_recv = NULL;
+    r->tree_essential_recv_N = 0;             
+    r->tree_essential_recv_Nmax = 0;          
+
 #else // MPI
 #ifndef LIBREBOUND
 	printf("Process id: %d.\n", getpid());
