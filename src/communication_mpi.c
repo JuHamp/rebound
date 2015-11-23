@@ -46,8 +46,6 @@
 #include "boundary.h"
 #include "communication_mpi.h"
 
-MPI_Status stat; 
-
 void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char** argv){
 	MPI_Init(&argc,&argv);
 	MPI_Comm_size(MPI_COMM_WORLD,&(r->mpi_num));
@@ -56,22 +54,41 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	
 	// Setup MPI description of the particle structure 
 	int bnum = 0;
-	int blen[4];
-	MPI_Aint indices[4];
-	MPI_Datatype oldtypes[4];
-	blen[bnum] 	= 10;
-	blen[bnum] 	+= 2; 
-	indices[bnum] 	= 0; 
-	oldtypes[bnum] 	= MPI_DOUBLE;
+	int blen[5];
+	MPI_Aint indices[5];
+	MPI_Datatype oldtypes[5];
+    {
+        blen[bnum] 	= 12;
+        indices[bnum] 	= 0; 
+        oldtypes[bnum] 	= MPI_DOUBLE;
+    }
 	bnum++;
-	struct reb_particle p;
-	blen[bnum] 	= 1; 
-	indices[bnum] 	= (char*)&p.c - (char*)&p; 
-	oldtypes[bnum] 	= MPI_CHAR;
+    {
+        struct reb_particle p;
+        blen[bnum] 	= 1; 
+        indices[bnum] 	= (char*)&p.c - (char*)&p; 
+        oldtypes[bnum] 	= MPI_CHAR;
+    }
 	bnum++;
-	blen[bnum] 	= 1; 
-	indices[bnum] 	= sizeof(struct reb_particle); 
-	oldtypes[bnum] 	= MPI_UB;
+    {
+        struct reb_particle p;
+        blen[bnum] 	= 1; 
+        indices[bnum] 	= (char*)&p.id - (char*)&p; 
+        oldtypes[bnum] 	= MPI_INT;
+    }
+	bnum++;
+    {
+        struct reb_particle p;
+        blen[bnum] 	= 2; 
+        indices[bnum] 	= (char*)&p.ap - (char*)&p; 
+        oldtypes[bnum] 	= MPI_CHAR;
+    }
+	bnum++;
+    {
+        blen[bnum] 	= 1; 
+        indices[bnum] 	= sizeof(struct reb_particle); 
+        oldtypes[bnum] 	= MPI_UB;
+    }
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_particle) );
 	MPI_Type_commit(&(r->mpi_particle)); 
@@ -79,25 +96,32 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	// Setup MPI description of the cell structure 
 	struct reb_treecell c;
 	bnum = 0;
-	blen[bnum] 	= 4; 
-	blen[bnum] 	+= 4;
+    {
+        blen[bnum] 	= 8; 
 #ifdef QUADRUPOLE
-	blen[bnum] 	+= 6;
+        blen[bnum] 	+= 6;
 #endif // QUADRUPOLE
-	indices[bnum] 	= 0; 
-	oldtypes[bnum] 	= MPI_DOUBLE;
+        indices[bnum] 	= 0; 
+        oldtypes[bnum] 	= MPI_DOUBLE;
+    }
 	bnum++;
-	blen[bnum] 	= 8; 
-	indices[bnum] 	= (char*)&c.oct - (char*)&c; 
-	oldtypes[bnum] 	= MPI_CHAR;
+    {
+        blen[bnum] 	= 8; 
+        indices[bnum] 	= (char*)&c.oct - (char*)&c; 
+        oldtypes[bnum] 	= MPI_CHAR;
+    }
 	bnum++;
-	blen[bnum] 	= 1; 
-	indices[bnum] 	= (char*)&c.pt - (char*)&c; 
-	oldtypes[bnum] 	= MPI_INT;
+    {
+        blen[bnum] 	= 1; 
+        indices[bnum] 	= (char*)&c.pt - (char*)&c; 
+        oldtypes[bnum] 	= MPI_INT;
+    }
 	bnum++;
-	blen[bnum] 	= 1; 
-	indices[bnum] 	= sizeof(struct reb_treecell); 
-	oldtypes[bnum] 	= MPI_UB;
+    {
+        blen[bnum] 	= 1; 
+        indices[bnum] 	= sizeof(struct reb_treecell); 
+        oldtypes[bnum] 	= MPI_UB;
+    }
 	bnum++;
 	MPI_Type_struct(bnum, blen, indices, oldtypes, &(r->mpi_cell) );
 	MPI_Type_commit(&(r->mpi_cell)); 
@@ -113,10 +137,10 @@ void reb_communication_mpi_init(struct reb_simulation* const r, int argc, char**
 	// Prepare send/recv buffers for essential tree
 	r->tree_essential_send   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
 	r->tree_essential_send_N 	= calloc(r->mpi_num,sizeof(int));
-	r->tree_essential_send_Nmax= calloc(r->mpi_num,sizeof(int));
+	r->tree_essential_send_Nmax = calloc(r->mpi_num,sizeof(int));
 	r->tree_essential_recv   	= calloc(r->mpi_num,sizeof(struct reb_treecell*));
 	r->tree_essential_recv_N 	= calloc(r->mpi_num,sizeof(int));
-	r->tree_essential_recv_Nmax= calloc(r->mpi_num,sizeof(int));
+	r->tree_essential_recv_Nmax = calloc(r->mpi_num,sizeof(int));
 }
 
 int reb_communication_mpi_rootbox_is_local(struct reb_simulation* const r, int i){

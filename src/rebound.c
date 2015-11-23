@@ -167,6 +167,18 @@ void reb_configure_box(struct reb_simulation* const r, const double root_size, c
 		exit(-1);
 	}
 	printf("MPI-node: %d. Process id: %d.\n",r->mpi_id, getpid());
+    int waits = 2;
+    if (r->mpi_id==0){
+        sleep(1);
+        printf("\n");
+    }
+    while(waits>0){
+        if (r->mpi_id==0){
+            printf("\033[1AWaiting %ds... \n",waits);
+        }
+        waits--;
+        sleep(1.);
+    }
 #endif // MPI
 }
 
